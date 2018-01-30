@@ -2,47 +2,69 @@
 const express = require('express'); //Required the express module
 const data = require('./db/notes');
 
+const { PORT } = require('./config');
+const { logger } = require('./logger');
+
+const simDB = require('./db/simDB');
+const notes = simDB.initialize(data);
 const app = express();
 //Created an instance from express module
 
 //Used the built in express module to serve static content from the specified directory
 app.use(express.static('public'))
+app.use(express.json());
 //Get request
+app.use(logger);
 
-app.get('/v1/notes', (req, res) => {
-  const {searchTerm} = req.query;
+app.get('/v1/notes', (req, res, next) => {
+  const { searchTerm } = req.query;
 
-  const filteredData = data.filter(item => {
-    return item.title.includes(searchTerm);
+  notes.filter(searchTerm, (err, list) => {
+    if (err) {
+      return next(err);
+    }
+    res.json(list);
   });
 
-  (searchTerm) ? res.json(filteredData) : res.json(data);
 });
 
-app.get('/v1/notes/:id', (req, res) => {
+app.get('/v1/notes/:id', (req, res, next) => {
   const id = parseInt(req.params.id);
-  const matchedItem = data.find(item => {
-    return item.id === id
+  
+  notes.find(id, (err, item) => {
+    if (err) {
+      return next(err);
+    }
+    if (item) {
+      res.json(item);
+    } else {
+      res.json('not found');
+    }
   });
-  res.json(matchedItem)
+
 });
-//Use destrcturing the pluck out the query
-//Filter through the data and use .includes to see if it matches the searchterm
-//return the iterm being matched
+
+app.get('/boom', (req, res, next) => {
+  throw new Error('Boom!!');
+});
 
 
-//Use a ternary operator for what to display
+app.use((req, res, next) => {
+  var err = new Error('Not Found');
+  err.status = 404;
+  res.status(404).json({ message: 'Not Found' });
+});
+
+app.use((err, req, res, next) => {
+  res.status(err.status || 500);
+  res.json({
+    message: err.message,
+    error: err
+  });
+});
 
 
 
-//Make use of parse int to parse the id
-//using the find method compare the matched item
-//display the matched item in a json format
-
-
-// INSERT EXPRESS APP CODE HERE...
-
-//Set up the server to listen on port 8080
-app.listen(8080, () => {
+app.listen(PORT, () => {
   console.log('listening on 8080')
 })
