@@ -44,9 +44,33 @@ app.get('/v1/notes/:id', (req, res, next) => {
 
 });
 
-app.get('/boom', (req, res, next) => {
-  throw new Error('Boom!!');
+app.put('/v1/notes/:id', (req, res, next) => {
+  const id = parseInt(req.params.id);
+
+  /***** Never trust users - validate input *****/
+  const updateObj = {};
+  const updateFields = ['title', 'content'];
+
+  updateFields.forEach(field => {
+    if (field in req.body) {
+      updateObj[field] = req.body[field];
+    }
+  });
+
+  notes.update(id, updateObj, (err, item) => {
+    if (err) {
+      return next(err);
+    }
+    if (item) {
+      res.json(item);
+      console.log(item);
+    } else {
+      next();
+    }
+  });
 });
+
+
 
 
 app.use((req, res, next) => {
