@@ -1,5 +1,6 @@
 'use strict';
 const express = require('express'); //Required the express module
+const morgan = require('morgan');
 const data = require('./db/notes');
 
 const { PORT } = require('./config');
@@ -11,7 +12,8 @@ const app = express();
 //Created an instance from express module
 
 //Used the built in express module to serve static content from the specified directory
-app.use(express.static('public'))
+app.use(morgan('dev'));
+app.use(express.static('public'));
 app.use(express.json());
 //Get request
 app.use(logger);
