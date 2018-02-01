@@ -20,6 +20,7 @@ const noteful = (function () {
     const listItems = list.map(item => `
     <li data-id="${item.id}" class="js-note-element ${currentNote.id === item.id ? 'active' : ''}">
       <a href="#" class="name js-note-show-link">${item.title}</a>
+      <button class="removeBtn js-note-delete-button">X</button>
     </li>`);
     return listItems.join('');
   }
@@ -31,6 +32,15 @@ const noteful = (function () {
     const id = $(item).closest('.js-note-element').data('id');
     return id;
   }
+
+  function handleNewNoteFormSubmit() {
+    $('.js-start-new-note-form').on('submit', function (event) {
+      event.preventDefault();
+      store.currentNote = false;
+      render();
+    });
+  }
+
 
   /**
    * EVENT LISTENERS AND HANDLERS
@@ -54,8 +64,8 @@ const noteful = (function () {
       event.preventDefault();
 
       const searchTerm = $('.js-note-search-entry').val();
-      store.currentSearchTerm =  searchTerm ? { searchTerm } : {};
-      
+      store.currentSearchTerm = searchTerm ? { searchTerm } : {};
+
       api.search(store.currentSearchTerm, response => {
         store.notes = response;
         render();
@@ -70,25 +80,58 @@ const noteful = (function () {
       const editForm = $(event.currentTarget);
 
       const noteObj = {
+        id: store.currentNote.id,
         title: editForm.find('.js-note-title-entry').val(),
         content: editForm.find('.js-note-content-entry').val()
       };
 
-      noteObj.id = store.currentNote.id;
+      if (store.currentNote.id) {
 
-      api.update(noteObj.id, noteObj, updateResponse => {
-        store.currentNote = updateResponse;
+        api.update(store.currentNote.id, noteObj, updateResponse => {
+          store.currentNote = updateResponse;
 
-        render();
-      });
+          api.search(store.currentSearchTerm, updateResponse => {
+            store.notes = updateResponse;
+            render();
+          });
+
+        });
+
+      } else {
+
+        api.create(noteObj, updateResponse => {
+          store.currentNote = updateResponse;
+
+          api.search(store.currentSearchTerm, updateResponse => {
+            store.notes = updateResponse;
+            render();
+          });
+
+        });
+      }
 
     });
   }
 
+  function handleDeleteItemClick() {
+    $('.js-notes-list').on('click', '.js-note-delete-button', function () {
+      const id = $(this).parent().attr('data-id');
+      api.delete(id, (res) => {
+        store.notes = store.notes.filter(item => String(item.id) !== id);
+        render();
+      });
+    });
+  }
+
+
   function bindEventListeners() {
     handleNoteItemClick();
+    handleDeleteItemClick();
     handleNoteSearchSubmit();
+
     handleNoteFormSubmit();
+    handleNewNoteFormSubmit();
+
   }
 
   // This object contains the only exposed methods from this module:
