@@ -3,7 +3,6 @@ const express = require('express'); //Required the express module
 const morgan = require('morgan');
 const notesRouter = require('./router/notes.router');
 const { PORT } = require('./config');
-
 const app = express();
 
 
