@@ -46,6 +46,12 @@ router.put('/notes/:id', (req, res, next) => {
     }
   });
 
+  if (!updateObj.title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
+
   notes.update(id, updateObj)
     .then(item => {
       if (item) {
@@ -60,7 +66,7 @@ router.put('/notes/:id', (req, res, next) => {
 // Post (insert) an item
 router.post('/notes', (req, res, next) => {
   const { title, content } = req.body;
-  console.log(req.body);
+
   const newItem = { title, content };
   /***** Never trust users - validate input *****/
   if (!newItem.title) {
