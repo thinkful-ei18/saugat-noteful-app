@@ -28,7 +28,12 @@ app.use((err, req, res, next) => {
 });
 
 
-
-app.listen(PORT, () => {
-  console.log('listening on 8080')
-})
+// Listen for incoming connections
+if (require.main === module) {
+  app.listen(PORT, function () {
+    console.info(`Server listening on ${this.address().port}`);
+  }).on('error', err => {
+    console.error(err);
+  });
+}
+module.exports = app; // Export for testing
